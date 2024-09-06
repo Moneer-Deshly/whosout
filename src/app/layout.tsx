@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
+
+import { config } from '@fortawesome/fontawesome-svg-core'
+import '@fortawesome/fontawesome-svg-core/styles.css'
+config.autoAddCss = false
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +26,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com"/>
         <link href="https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap" rel="stylesheet"/>
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+      <Link href={"/"}><h1 className="text-primary text-center mouse-memoirs-regular text-[10rem]">Who's Out</h1></Link>
+      {children}
+      </body>
     </html>
   );
 }

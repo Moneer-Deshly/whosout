@@ -10,6 +10,11 @@
     "dbpush": "drizzle-kit push"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.6.0",
+    "@fortawesome/free-brands-svg-icons": "^6.6.0",
+    "@fortawesome/free-regular-svg-icons": "^6.6.0",
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "@libsql/client": "^0.9.0",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.33.0",
