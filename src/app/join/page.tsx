@@ -7,9 +7,6 @@ import Link from "next/link";
 export default function Page(){
     return (
       <main className="h-screen flex flex-col gap-8 p-16 text-[3rem]">
-        <Link className="mouse-memoirs-regular w-fit" href={"/"}>
-          <Button text="Back" />
-        </Link>
         <div className="flex flex-col gap-2 justify-center items-center">
           <p className="mouse-memoirs-regular">Enter lobby code</p>
           <div className="flex gap-2 items-center">
