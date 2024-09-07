@@ -26,7 +26,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com"/>
         <link href="https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap" rel="stylesheet"/>
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} flex flex-col`}>
       <Link href={"/"}><h1 className="text-primary text-center mouse-memoirs-regular text-[10rem]">Who's Out</h1></Link>
       {children}
       </body>

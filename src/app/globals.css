@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .mouse-memoirs-regular {
   font-family: "Mouse Memoirs", system-ui;
   font-weight: 400;
