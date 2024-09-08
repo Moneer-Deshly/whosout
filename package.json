@@ -2,10 +2,11 @@
   "name": "whosout",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server.js",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.js",
     "lint": "next lint",
     "dbpush": "drizzle-kit push"
   },
@@ -22,6 +23,8 @@
     "react": "^18",
     "react-dom": "^18",
     "short-unique-id": "^5.2.0",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
     "tw-merge": "^0.0.1-alpha.3"
   },
   "devDependencies": {
