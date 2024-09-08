@@ -9,6 +9,7 @@ export default function page() {
     const [clickSrc, setClickSrc] = useState("")
 
     const router = useRouter()
+    // change this later to be handled by the pages individually rather than this absolute horror mess
 
     const CheckUsernameExists = (e:React.MouseEvent<HTMLButtonElement>) =>{
 

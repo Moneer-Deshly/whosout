@@ -1,19 +1,44 @@
 "use client"
 
 import Button from "@/lib/components/Button"
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faClipboard } from '@fortawesome/free-solid-svg-icons'
 import ShortUniqueId from "short-unique-id";
+import { socket } from "../socket";
 
 
 export default function page() {
     const [isCopied, setIsCopied] = useState(false);
     const [link, setLink] = useState("")
+    const [socketID, setSocketID] = useState("")
+
+    useEffect(() => {
+    return () => {
+        socket.off("connect", onConnect);
+        socket.off("disconnect", onDisconnect);
+    };
+    }, []);
+
+    function onConnect() {
+        console.log("successfully connected")
+    }
+
+    function onDisconnect() {
+        console.log("successfully disconnected");
+    }
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("lobbiesUpdate", (v)=>{
+        console.log(v)
+    });
 
     const handleCreation = () => {
         const uid = new ShortUniqueId({ length: 8 });
-        setLink(uid.rnd());
+        const lobbyId = uid.rnd()
+        setLink(lobbyId);
+        socket.emit("create", {lobbyId, username: localStorage.getItem("username")});
     }
 
     const showCopiedMessage = () => {
@@ -53,7 +78,7 @@ const CopyTextField = ({setIsCopied, link}:{setIsCopied: Dispatch<SetStateAction
     )
 }
 
-function LobbyPlayers({}){
+export function LobbyPlayers({}){
     return (
         <div className="mt-16 mouse-memoirs-regular">
             <h2 className="text-7xl">Connected Players</h2>
