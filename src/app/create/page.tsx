@@ -12,13 +12,27 @@ export default function page() {
     const [isCopied, setIsCopied] = useState(false);
     const [link, setLink] = useState("")
     const [socketID, setSocketID] = useState("")
+    const [players, setPlayers] = useState<string[]>([]);
 
     useEffect(() => {
-    return () => {
-        socket.off("connect", onConnect);
-        socket.off("disconnect", onDisconnect);
-    };
-    }, []);
+        socket.on("connect", onConnect);
+        socket.on("disconnect", onDisconnect);
+
+        socket.on("lobbiesUpdate", (updatedPlayers: [string, string[]][]) => { 
+            const matchingLobby = updatedPlayers.find(
+                (lobby) => lobby[0] === link
+            );
+            
+            if (matchingLobby) {
+                setPlayers(matchingLobby[1]);
+            }
+        });
+
+        return () => {
+            socket.off("connect", onConnect);
+            socket.off("disconnect", onDisconnect);
+        };
+    }, [link]); 
 
     function onConnect() {
         console.log("successfully connected")
@@ -27,12 +41,6 @@ export default function page() {
     function onDisconnect() {
         console.log("successfully disconnected");
     }
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("lobbiesUpdate", (v)=>{
-        console.log(v)
-    });
 
     const handleCreation = () => {
         const uid = new ShortUniqueId({ length: 8 });
@@ -53,7 +61,7 @@ export default function page() {
                 <div className="flex flex-col items-center"><Button text="Generate Lobby Key" onClick={handleCreation} classes="text-[3rem]"/></div>
                 <div className="flex flex-col items-center w-full"><CopyTextField setIsCopied={setIsCopied} link={link}/><div className="mt-1 min-h-10">{showCopiedMessage()}</div></div>
             </div>
-            <div className="flex flex-col items-center"><div><LobbyPlayers/></div></div>
+            <div className="flex flex-col items-center"><div><LobbyPlayers players={players}/></div></div>
         </div>
     )
 }
@@ -78,18 +86,19 @@ const CopyTextField = ({setIsCopied, link}:{setIsCopied: Dispatch<SetStateAction
     )
 }
 
-export function LobbyPlayers({}){
+export function LobbyPlayers({ players }: { players: string[] }) {
     return (
-        <div className="mt-16 mouse-memoirs-regular">
+        <div className="mt-16 mouse-memoirs-regular w-full flex flex-col items-center">
             <h2 className="text-7xl">Connected Players</h2>
-            <ul className="grid grid-cols-2 text-5xl place-items-center gap-2 mt-4">
-                <li>Player 1</li>
-                <li>Player 2</li>
-                <li>Player 3</li>
-                <li>Player 4</li>
-                <li>Player 5</li>
-                <li>Player 6</li>
+            <ul className="grid grid-cols-2 text-5xl place-items-center gap-2 mt-4 w-full">
+                {players.length > 0 ? (
+                    players.map((player, index) => (
+                        <li key={index} className="text-center">{player}</li>
+                    ))
+                ) : (
+                    <li className="col-span-2 text-center">No players connected</li>
+                )}
             </ul>
         </div>
-    )
+    );
 }
