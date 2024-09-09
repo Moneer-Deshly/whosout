@@ -1,18 +1,25 @@
 "use client"
 
 import Button from "@/lib/components/Button"
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faClipboard } from '@fortawesome/free-solid-svg-icons'
 import ShortUniqueId from "short-unique-id";
 import { socket } from "../socket";
+import { UsernameModalContext } from "@/lib/components/PagesWrapper";
 
 
 export default function page() {
     const [isCopied, setIsCopied] = useState(false);
     const [link, setLink] = useState("")
-    const [socketID, setSocketID] = useState("")
     const [players, setPlayers] = useState<string[]>([]);
+    const { setShowModal } = useContext(UsernameModalContext);
+
+    useEffect(()=>{
+        if(!localStorage.getItem("username")){
+            setShowModal(true)
+        }
+    },[])
 
     useEffect(() => {
         socket.on("connect", onConnect);
@@ -31,6 +38,7 @@ export default function page() {
         return () => {
             socket.off("connect", onConnect);
             socket.off("disconnect", onDisconnect);
+            setShowModal(false)
         };
     }, [link]); 
 

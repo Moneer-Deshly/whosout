@@ -4,15 +4,22 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {socket} from "../socket"
 import { LobbyPlayers } from "../create/page";
 
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import { UsernameModalContext } from "@/lib/components/PagesWrapper";
 
 export default function Page(){
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [players, setPlayers] = useState<string[]>([])
+  const { setShowModal } = useContext(UsernameModalContext);
 
   useEffect(() => {
+    if(!localStorage.getItem("username")){
+      setShowModal(true)
+    }
+
     return () => {
+      setShowModal(false)
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
     };
