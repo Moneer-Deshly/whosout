@@ -46,6 +46,11 @@ app.prepare().then(async () => {
     })
 
     socket.on("join", async(val)=>{
+      if(!val.lobbyId || !val.username){
+        socket.emit("error", "missing fields")
+        return;
+      }
+      
       const exists = await redisClient.exists(val.lobbyId)
       if(!exists){
         socket.emit("error", "invalid lobby code")
@@ -53,8 +58,16 @@ app.prepare().then(async () => {
       }
 
       else{
+        
+        const _players = await redisClient.hGet(val.lobbyId, "players")
+        
+        if(!_players){
+          socket.emit("error", "error fetching players")
+          return;
+        }
+        
         // parse the stringified players array from the map
-        const players = JSON.parse(await redisClient.hGet(val.lobbyId, "players"))
+        const players = JSON.parse(_players)
 
         // using hSet with an existing key just updates the map with the values we provide
         // creator wont change here as its not a provided field
