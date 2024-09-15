@@ -20,7 +20,22 @@ const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
 // struct of lobbies
-// map<lobbyId, {creator: string, players:[]}>
+// idk how jsdoc works so ty AI 
+
+/**
+ * Represents a player in the game.
+ * @typedef {Object} Player
+ * @property {string} username - The username of the player.
+ * @property {string} socketId - The socket ID of the player.
+ */
+
+/**
+ * Represents a game lobby.
+ * @typedef {Object} GameLobby
+ * @property {string} lobbyId - The unique identifier for the lobby.
+ * @property {Player} creator - The creator of the lobby.
+ * @property {Player[]} players - An array of players in the lobby.
+ */
 
 app.prepare().then(async () => {
   const httpServer = createServer(handler);
@@ -32,17 +47,19 @@ app.prepare().then(async () => {
 
   io.on("connection", async(socket) => {
     socket.on("create", async (val)=>{
-      // set a new map in our redis db
-      // players must be stringified because arrays are an invalid data type
-      await redisClient.hSet(
-        val.lobbyId,
-        {
-          'creator': val.username,
-          'players': JSON.stringify(["p1", "p2", "p3"]),
-        }
-      )
+      // set a new obj in our redis db
+      /**@type {GameLobby} */
+      const lobby = {
+        creator:{
+          username: val.username,
+          socketId: socket.id
+        },
+        players: [],
+        lobbyId: val.lobbyId,
+      }
 
-      //io.emit("lobbiesUpdate", Array.from(lobbies));
+      // lobby must be stringified as objects dont work in redis
+      await redisClient.set(val.lobbyId ,JSON.stringify(lobby))
     })
 
     socket.on("join", async(val)=>{
@@ -59,26 +76,25 @@ app.prepare().then(async () => {
 
       else{
         
-        const _players = await redisClient.hGet(val.lobbyId, "players")
-        
-        if(!_players){
-          socket.emit("error", "error fetching players")
+        const _lobby = await redisClient.get(val.lobbyId)
+        if(!_lobby){
+          socket.emit("error", "error fetching lobby")
           return;
         }
-        
-        // parse the stringified players array from the map
-        const players = JSON.parse(_players)
 
-        // using hSet with an existing key just updates the map with the values we provide
-        // creator wont change here as its not a provided field
-        await redisClient.hSet(
-          val.lobbyId,
-          {
-            'players': JSON.stringify([...players, val.username]),
-          }
-        )
+        // parse the stringified lobby
+        /**@type {GameLobby} */
+        const lobby = JSON.parse(_lobby)
+        lobby.players = [...lobby.players, {username: val.username, socketId: socket.id}]
+
+        await redisClient.set(val.lobbyId ,JSON.stringify(lobby))
+
+        lobby.players.forEach((player)=>{
+          io.to(player.socketId).emit("lobbiesUpdate", lobby.players)
+        })
+        io.to(lobby.creator.socketId).emit("lobbiesUpdate", lobby.players)
       }
-      //io.emit("lobbiesUpdate", Array.from(lobbies));
+      
     })
 
 

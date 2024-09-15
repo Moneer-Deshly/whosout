@@ -43,6 +43,7 @@ export default function Page(){
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("lobbiesUpdate", (v)=>{
+      console.log(v)
       if(v.length > 0){
         setPlayers([v[1]])
       }

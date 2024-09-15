@@ -8,6 +8,16 @@ import ShortUniqueId from "short-unique-id";
 import { socket } from "../socket";
 import { UsernameModalContext } from "@/lib/components/PagesWrapper";
 
+interface Player {
+    username: string;
+    socketId: string;
+}
+
+interface Lobby {
+    lobbyId: string;
+    creator: Player;
+    players: Player[];
+}
 
 export default function page() {
     const [isCopied, setIsCopied] = useState(false);
@@ -24,16 +34,6 @@ export default function page() {
     useEffect(() => {
         socket.on("connect", onConnect);
         socket.on("disconnect", onDisconnect);
-
-        socket.on("lobbiesUpdate", (updatedPlayers: [string, string[]][]) => { 
-            const matchingLobby = updatedPlayers.find(
-                (lobby) => lobby[0] === link
-            );
-            
-            if (matchingLobby) {
-                setPlayers(matchingLobby[1]);
-            }
-        });
 
         return () => {
             socket.off("connect", onConnect);
@@ -62,6 +62,13 @@ export default function page() {
             return (<div className="text-sm">Key copied!</div>)
         }
     }
+
+    socket.on("lobbiesUpdate", (v: Player[]) => { 
+        console.log(v)
+        if (v.length > 0) {
+            setPlayers(v.map(player => player.username));
+        }
+    });
 
     return (
         <div className="grid grid-cols-1 place-items-center">
