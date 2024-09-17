@@ -7,23 +7,19 @@ import { faClipboard } from '@fortawesome/free-solid-svg-icons'
 import ShortUniqueId from "short-unique-id";
 import { socket } from "../socket";
 import { UsernameModalContext } from "@/lib/components/PagesWrapper";
+import { useRouter } from "next/navigation";
 
 interface Player {
     username: string;
     socketId: string;
 }
 
-interface Lobby {
-    lobbyId: string;
-    creator: Player;
-    players: Player[];
-}
-
 export default function page() {
     const [isCopied, setIsCopied] = useState(false);
     const [link, setLink] = useState("")
-    const [players, setPlayers] = useState<string[]>([]);
+    const [players, setPlayers] = useState<Player[]>([]);
     const { setShowModal } = useContext(UsernameModalContext);
+    const router = useRouter()
 
     useEffect(()=>{
         if(!localStorage.getItem("username")){
@@ -63,10 +59,17 @@ export default function page() {
         }
     }
 
+    function startGame() {
+        socket.emit("startGame", {lobbyId: link});
+    }
+
+    socket.on("game-starting", (v:string) => {
+        router.push(`/game/${v}`);
+        });
+
     socket.on("lobbiesUpdate", (v: Player[]) => { 
-        console.log(v)
         if (v.length > 0) {
-            setPlayers(v.map(player => player.username));
+            setPlayers([...v]);
         }
     });
 
@@ -76,7 +79,12 @@ export default function page() {
                 <div className="flex flex-col items-center"><Button text="Generate Lobby Key" onClick={handleCreation} classes="text-[3rem]"/></div>
                 <div className="flex flex-col items-center w-full"><CopyTextField setIsCopied={setIsCopied} link={link}/><div className="mt-1 min-h-10">{showCopiedMessage()}</div></div>
             </div>
-            <div className="flex flex-col items-center"><div><LobbyPlayers players={players}/></div></div>
+            <LobbyPlayers players={players}/>
+            {players.length > 0 &&(
+                <div className="flex flex-col items-center mt-2">
+                    <Button text="Start Game" onClick={startGame} classes="text-[3rem]"/>
+                </div>
+            )}
         </div>
     )
 }
@@ -101,19 +109,21 @@ const CopyTextField = ({setIsCopied, link}:{setIsCopied: Dispatch<SetStateAction
     )
 }
 
-export function LobbyPlayers({ players }: { players: string[] }) {
+export function LobbyPlayers({ players }: { players: Player[] }) {
     return (
-        <div className="mt-16 mouse-memoirs-regular w-full flex flex-col items-center">
-            <h2 className="text-7xl">Connected Players</h2>
-            <ul className="grid grid-cols-2 text-5xl place-items-center gap-2 mt-4 w-full">
-                {players.length > 0 ? (
-                    players.map((player, index) => (
-                        <li key={index} className="text-center">{player}</li>
-                    ))
-                ) : (
-                    <li className="col-span-2 text-center">No players connected</li>
-                )}
-            </ul>
+        <div className="flex flex-col items-center">
+            <div className="mouse-memoirs-regular w-full flex flex-col items-center">
+                <h2 className="text-7xl">Connected Players</h2>
+                <ul className="grid grid-cols-2 text-5xl place-items-center gap-2 mt-4 w-full">
+                    {players.length > 0 ? (
+                        players.map((player, index) => (
+                            <li key={index} className="text-center">{player.username}</li>
+                        ))
+                    ) : (
+                        <li className="col-span-2 text-center">No players connected</li>
+                    )}
+                </ul>
+            </div>
         </div>
     );
 }

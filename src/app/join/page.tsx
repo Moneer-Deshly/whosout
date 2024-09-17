@@ -3,15 +3,22 @@ import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {socket} from "../socket"
 import { LobbyPlayers } from "../create/page";
-
 import { useContext, useEffect, useRef, useState } from "react";
 import { UsernameModalContext } from "@/lib/components/PagesWrapper";
+import { useRouter } from "next/navigation";
+
+interface Player {
+  username: string;
+  socketId: string;
+}
+
 
 export default function Page(){
 
   const inputRef = useRef<HTMLInputElement>(null)
-  const [players, setPlayers] = useState<string[]>([])
+  const [players, setPlayers] = useState<Player[]>([]);
   const { setShowModal } = useContext(UsernameModalContext);
+  const router = useRouter()
 
   useEffect(() => {
     if(!localStorage.getItem("username")){
@@ -42,12 +49,16 @@ export default function Page(){
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-    socket.on("lobbiesUpdate", (v)=>{
-      console.log(v)
+
+    socket.on("lobbiesUpdate", (v: Player[])=>{
       if(v.length > 0){
-        setPlayers([v[1]])
+        setPlayers([...v])
       }
     });
+
+    socket.on("game-starting",(v: string)=>{
+       router.push("/game/"+v)
+    })
 
     return (
       <main className="h-screen flex flex-col gap-8 p-16 text-[3rem]">
@@ -63,6 +74,7 @@ export default function Page(){
                 />
               </button>
             </form>
+            {players.length > 0 && <LobbyPlayers players={players}/>}
         </div>
       </main>
     );

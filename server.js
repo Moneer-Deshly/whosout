@@ -45,6 +45,10 @@ app.prepare().then(async () => {
   await redisClient.connect();
 
 
+  //TODO
+  // clean up lobbies when they are done / when someone disconnects
+  // prevent user from spamming join button
+  
   io.on("connection", async(socket) => {
     socket.on("create", async (val)=>{
       // set a new obj in our redis db
@@ -54,12 +58,16 @@ app.prepare().then(async () => {
           username: val.username,
           socketId: socket.id
         },
-        players: [],
+        players: [{
+          username: val.username,
+          socketId: socket.id
+        }],
         lobbyId: val.lobbyId,
       }
 
       // lobby must be stringified as objects dont work in redis
       await redisClient.set(val.lobbyId ,JSON.stringify(lobby))
+      socket.join(val.lobbyId)
     })
 
     socket.on("join", async(val)=>{
@@ -74,29 +82,42 @@ app.prepare().then(async () => {
         return;
       }
 
-      else{
-        
-        const _lobby = await redisClient.get(val.lobbyId)
-        if(!_lobby){
-          socket.emit("error", "error fetching lobby")
-          return;
-        }
-
-        // parse the stringified lobby
-        /**@type {GameLobby} */
-        const lobby = JSON.parse(_lobby)
-        lobby.players = [...lobby.players, {username: val.username, socketId: socket.id}]
-
-        await redisClient.set(val.lobbyId ,JSON.stringify(lobby))
-
-        lobby.players.forEach((player)=>{
-          io.to(player.socketId).emit("lobbiesUpdate", lobby.players)
-        })
-        io.to(lobby.creator.socketId).emit("lobbiesUpdate", lobby.players)
+      const _lobby = await redisClient.get(val.lobbyId)
+      if(!_lobby){
+        socket.emit("error", "error fetching lobby")
+        return;
       }
+
+      // parse the stringified lobby
+      /**@type {GameLobby} */
+      const lobby = JSON.parse(_lobby)
+      lobby.players = [...lobby.players, {username: val.username, socketId: socket.id}]
+
+      await redisClient.set(val.lobbyId ,JSON.stringify(lobby))
+      socket.join(val.lobbyId)
+      io.to(val.lobbyId).emit("lobbiesUpdate", lobby.players)
       
     })
 
+    socket.on("startGame",async(val)=>{
+      const exists = await redisClient.exists(val.lobbyId)
+      if(!exists){
+        socket.emit("error", "invalid lobby code")
+        return;
+      }
+
+      const _lobby = await redisClient.get(val.lobbyId)
+      if(!_lobby){
+        socket.emit("error", "error fetching lobby")
+        return;
+      }
+
+      // parse the stringified lobby
+      /**@type {GameLobby} */
+      const lobby = JSON.parse(_lobby)
+      io.to(val.lobbyId).emit("game-starting", lobby.lobbyId)
+
+    })
 
   });
 
